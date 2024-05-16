@@ -1,11 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:ngdemo17/pages/home_page.dart';
-import 'package:ngdemo17/pages/signup_page.dart';
-import 'package:ngdemo17/services/auth_service.dart';
+import 'package:insta_clone_bloc/pages/signup_page.dart';
 
+import '../services/auth_service.dart';
 import '../services/prefs_service.dart';
 import '../services/utils_service.dart';
+import 'home_page.dart';
 
 class SignInPage extends StatefulWidget {
   static final String id = 'signin_page';

@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart';
-import 'package:ngdemo17/model/member_model.dart';
-import 'package:ngdemo17/services/log_service.dart';
+import '../model/member_model.dart';
 import '../model/notification_model.dart';
+import 'log_service.dart';
 
 class Network {
   static String SERVER_FCM = "fcm.googleapis.com";
@@ -35,5 +35,14 @@ class Network {
 
     LogService.i(notificationModel.toJson().toString());
     return notificationModel.toJson();
+  }
+
+  static Map<String, dynamic> notifyLike(Member sender, Member receiver) {
+    Notification notification =
+    Notification(title: "Liked", body: "${sender.fullname} has just been liked your post");
+    List<String>? ids = [receiver.device_token];
+    NotificationModel model =
+    NotificationModel(notification: notification, registrationIds: ids);
+    return model.toJson();
   }
 }

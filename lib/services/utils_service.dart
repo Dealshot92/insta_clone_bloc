@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:ngdemo17/services/prefs_service.dart';
+import 'package:insta_clone_bloc/services/prefs_service.dart';
 import 'package:platform_device_id_v3/platform_device_id.dart';
 
 class Utils {

@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:ngdemo17/pages/signin_page.dart';
-import 'package:ngdemo17/services/prefs_service.dart';
+import 'package:insta_clone_bloc/services/prefs_service.dart';
 
 class AuthService {
   static final _auth=FirebaseAuth.instance;

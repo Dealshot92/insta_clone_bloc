@@ -1,10 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:ngdemo17/model/member_model.dart';
-import 'package:ngdemo17/pages/signin_page.dart';
-import 'package:ngdemo17/services/auth_service.dart';
-import 'package:ngdemo17/services/db_service.dart';
+import 'package:insta_clone_bloc/pages/signin_page.dart';
 
+import '../model/member_model.dart';
+import '../services/auth_service.dart';
+import '../services/db_service.dart';
 import '../services/prefs_service.dart';
 import '../services/utils_service.dart';
 import 'home_page.dart';

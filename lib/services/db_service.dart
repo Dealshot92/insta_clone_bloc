@@ -1,7 +1,7 @@
 
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:ngdemo17/services/utils_service.dart';
+import 'package:insta_clone_bloc/services/utils_service.dart';
 
 import '../model/member_model.dart';
 import '../model/post_model.dart';
@@ -35,6 +35,12 @@ class DBService {
         .collection(folder_users)
         .doc(member.uid)
         .set(member.toJson());
+  }
+  static Future<Member> getOwner(String uid) async {
+    var user = await _firestore.collection(folder_users).doc(uid).get();
+    var receiver = Member.fromJson(user.data()!);
+    LogService.i(receiver.fullname);
+    return receiver;
   }
 
   static Future<Member> loadMember()async{

@@ -1,5 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:insta_clone_bloc/bloc/home_page/home_bloc.dart';
+import 'package:insta_clone_bloc/bloc/home_page/home_event.dart';
+import 'package:insta_clone_bloc/bloc/home_page/home_state.dart';
+import '../bloc/feed_page/feed_bloc.dart';
+import '../bloc/feed_page/liked_bloc.dart';
 import 'my_feed_page.dart';
 import 'my_likes_page.dart';
 import 'my_profile_page.dart';
@@ -16,84 +22,90 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  PageController? _pageController;
-  int _currentTap = 0;
+  late HomeBloc homeBloc;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    _pageController = PageController();
+
+    homeBloc = BlocProvider.of<HomeBloc>(context);
+    homeBloc.pageController = PageController();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        children: [
-          MyFeedPage(
-            pageController: _pageController,
+    return BlocBuilder<HomeBloc, HomeState>(
+      builder: (context, state) {
+        return Scaffold(
+          body: PageView(
+            controller: homeBloc.pageController,
+            children: [
+              MultiBlocProvider(
+                providers: [
+                  BlocProvider(
+                    create: (context) => FeedBloc(),
+                  ),
+                  BlocProvider(
+                    create: (context) => LikedBloc(),
+                  )
+                ],
+                child: MyFeedPage(
+                  pageController: homeBloc.pageController,
+                ),
+              ),
+              const MySearchPage(),
+              MyUploadPage(
+                pageController: homeBloc.pageController,
+              ),
+              const MyLikesPage(),
+              const MyProfilePage(),
+            ],
+            onPageChanged: (int index) {
+              homeBloc.add(HomePageChangedEvent(index));
+            },
           ),
-          const MySearchPage(),
-          MyUploadPage(
-            pageController: _pageController,
+          bottomNavigationBar: CupertinoTabBar(
+            onTap: (int index) {
+              homeBloc.add(HomeAnimateToPageEvent(index));
+            },
+            currentIndex: homeBloc.currentTap,
+            activeColor: const Color.fromRGBO(193, 53, 132, 1),
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(
+                  Icons.home,
+                  size: 32,
+                ),
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(
+                  Icons.search,
+                  size: 32,
+                ),
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(
+                  Icons.add_box,
+                  size: 32,
+                ),
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(
+                  Icons.favorite,
+                  size: 32,
+                ),
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(
+                  Icons.account_circle,
+                  size: 32,
+                ),
+              )
+            ],
           ),
-          const MyLikesPage(),
-          const MyProfilePage(),
-        ],
-        onPageChanged: (int index) {
-          setState(() {
-            _currentTap = index;
-          });
-        },
-      ),
-      bottomNavigationBar: CupertinoTabBar(
-        onTap: (int index) {
-          setState(() {
-            _currentTap = index;
-            _pageController!.animateToPage(
-              index,
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeIn,
-            );
-          });
-        },
-        currentIndex: _currentTap,
-        activeColor: const Color.fromRGBO(193, 53, 132, 1),
-        items:const [
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.home,
-              size: 32,
-            ),
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.search,
-              size: 32,
-            ),
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.add_box,
-              size: 32,
-            ),
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.favorite,
-              size: 32,
-            ),
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.account_circle,
-              size: 32,
-            ),
-          )
-        ],
-      ),
+        );
+      },
     );
   }
 }

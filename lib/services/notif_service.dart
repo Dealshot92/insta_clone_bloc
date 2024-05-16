@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:ngdemo17/services/log_service.dart';
+
+import 'log_service.dart';
 
 class NotifService {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =

@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:ngdemo17/pages/signin_page.dart';
+import 'package:insta_clone_bloc/pages/signin_page.dart';
 
 import '../model/member_model.dart';
 import '../model/post_model.dart';
