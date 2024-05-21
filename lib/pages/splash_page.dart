@@ -26,7 +26,6 @@ late SplashBloc splashBloc;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     splashBloc=BlocProvider.of<SplashBloc>(context);
     splashBloc.initTimer(context);
