@@ -4,8 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:insta_clone_bloc/bloc/home_page/home_bloc.dart';
 import 'package:insta_clone_bloc/bloc/home_page/home_event.dart';
 import 'package:insta_clone_bloc/bloc/home_page/home_state.dart';
-import '../bloc/feed_page/feed_bloc.dart';
-import '../bloc/feed_page/liked_bloc.dart';
+import 'package:insta_clone_bloc/bloc/myfeed/like_post_bloc.dart';
+import '../bloc/myfeed/my_feed_bloc.dart';
+import '../services/log_service.dart';
 import 'my_feed_page.dart';
 import 'my_likes_page.dart';
 import 'my_profile_page.dart';
@@ -24,52 +25,58 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late HomeBloc homeBloc;
 
+  PageController? _pageController = PageController();
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
 
-    homeBloc = BlocProvider.of<HomeBloc>(context);
-    homeBloc.pageController = PageController();
+    homeBloc = context.read<HomeBloc>();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<HomeBloc, HomeState>(
+    return BlocConsumer<HomeBloc, HomeState>(
+      listener: (context, state) {
+        LogService.i(state.currentIndex.toString());
+      },
       builder: (context, state) {
         return Scaffold(
           body: PageView(
-            controller: homeBloc.pageController,
+            controller: _pageController,
             children: [
               MultiBlocProvider(
                 providers: [
                   BlocProvider(
-                    create: (context) => FeedBloc(),
+                    create: (context) => MyFeedBloc(),
                   ),
                   BlocProvider(
-                    create: (context) => LikedBloc(),
+                    create: (context) => LikePostBloc(),
                   )
                 ],
                 child: MyFeedPage(
-                  pageController: homeBloc.pageController,
+                  pageController: _pageController,
                 ),
               ),
               const MySearchPage(),
               MyUploadPage(
-                pageController: homeBloc.pageController,
+                pageController: _pageController,
               ),
               const MyLikesPage(),
               const MyProfilePage(),
             ],
             onPageChanged: (int index) {
-              homeBloc.add(HomePageChangedEvent(index));
+              homeBloc.add(PageViewEvent(currentIndex: index));
             },
           ),
           bottomNavigationBar: CupertinoTabBar(
             onTap: (int index) {
-              homeBloc.add(HomeAnimateToPageEvent(index));
+              homeBloc.add(BottomNavEvent(currentIndex: index));
+              _pageController!.animateToPage(index,
+                  duration: Duration(milliseconds: 200), curve: Curves.easeIn);
             },
-            currentIndex: homeBloc.currentTap,
+            currentIndex: state.currentIndex,
             activeColor: const Color.fromRGBO(193, 53, 132, 1),
             items: const [
               BottomNavigationBarItem(

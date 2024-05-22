@@ -1,29 +1,21 @@
+
 import 'package:bloc/bloc.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:insta_clone_bloc/bloc/home_page/home_event.dart';
-import 'package:insta_clone_bloc/bloc/home_page/home_state.dart';
+
+import 'home_event.dart';
+import 'home_state.dart';
 
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
-  PageController? pageController;
-  int currentTap = 0;
 
-  HomeBloc() : super(HomeInitialState()) {
-    on<HomePageChangedEvent>(onPageChanged);
-    on<HomeAnimateToPageEvent>(animateToPage);
+  HomeBloc() : super(CurrentIndexState(currentIndex: 0)) {
+    on<BottomNavEvent>(_onBottomNavEvent);
+    on<PageViewEvent>(_onPageViewEvent);
   }
 
-  onPageChanged(HomePageChangedEvent event, Emitter<HomeState> emit) {
-    currentTap = event.index;
-    emit(HomePageChangedState(currentTap));
+  Future<void> _onBottomNavEvent(BottomNavEvent event, Emitter<HomeState> emit) async {
+    emit(CurrentIndexState(currentIndex: event.currentIndex));
   }
 
-  animateToPage(HomeAnimateToPageEvent event, Emitter<HomeState> emit) {
-    currentTap = event.index;
-    pageController!.animateToPage(
-      event.index,
-      duration: const Duration(microseconds: 200),
-      curve: Curves.easeIn,
-    );
-    emit(HomeAnimatedToPageState(currentTap, pageController!));
+  Future<void> _onPageViewEvent(PageViewEvent event, Emitter<HomeState> emit) async {
+    emit(CurrentIndexState(currentIndex: event.currentIndex));
   }
 }

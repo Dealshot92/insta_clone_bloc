@@ -1,13 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:insta_clone_bloc/pages/signin_page.dart';
-
-import '../model/member_model.dart';
-import '../services/auth_service.dart';
-import '../services/db_service.dart';
-import '../services/prefs_service.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:insta_clone_bloc/bloc/signup_page/signup_bloc.dart';
+import 'package:insta_clone_bloc/bloc/signup_page/signup_event.dart';
+import 'package:insta_clone_bloc/bloc/signup_page/signup_state.dart';
 import '../services/utils_service.dart';
-import 'home_page.dart';
 
 class SignUpPage extends StatefulWidget {
   static const String id = 'signup_page';
@@ -19,7 +15,8 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
-  var isLoading = false;
+  late SignUpBloc signUpBloc;
+
   var fullnameController = TextEditingController();
   var emailController = TextEditingController();
   var passwordController = TextEditingController();
@@ -37,216 +34,212 @@ class _SignUpPageState extends State<SignUpPage> {
       Utils.fireToast("Password and confirm password does not match");
       return;
     }
-    setState(() {
-      isLoading = true;
-    });
-
-    AuthService.signUpUser(context, fullname, email, password)
-        .then((firebaseUser) => {
-              _getFirebaseUser(firebaseUser, Member(fullname, email)),
-            });
+    signUpBloc.add(SignedUpEvent(
+        context: context,
+        fullname: fullname,
+        email: email,
+        password: password));
   }
 
-  _getFirebaseUser(User? firebaseUser, Member member) async {
-    setState(() {
-      isLoading = false;
-    });
-    if (firebaseUser != null) {
-      //save user id locally
-      _saveMemberIdToLocal(firebaseUser);
-
-      //save member to database
-      _saveMemberToCloud(member);
-
-      _callHomePage();
-    } else {
-      Utils.fireToast('Check your information');
-    }
-  }
-
-  _saveMemberIdToLocal(User firebaseUser) async {
-    await Prefs.saveUserId(firebaseUser.uid);
-  }
-
-  _saveMemberToCloud(Member member) async {
-    await DBService.storeMember(member);
-  }
-
-  _callHomePage() {
-    Navigator.pushReplacementNamed(context, HomePage.id);
-  }
-
-  _callSignInPage() {
-    Navigator.pushReplacementNamed(context, SignInPage.id);
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    signUpBloc = context.read<SignUpBloc>();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        padding: EdgeInsets.all(10),
-        width: MediaQuery.of(context).size.width,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Color.fromRGBO(193, 53, 132, 1),
-                Color.fromRGBO(131, 58, 180, 1),
-              ]),
-        ),
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                Expanded(
-                  child: Column(
+    return BlocConsumer<SignUpBloc, SignUpState>(
+      listener: (context, state) {
+        if (state is SignUpSuccessState) {
+          signUpBloc.callHomePage(context);
+        }
+        if (state is SignUpFailureState) {
+          Utils.fireToast(state.errorMessage);
+        }
+      },
+      builder: (context, state) {
+        if (state is SignUpLoadingState) {
+          return viewOfSignUpPage(true);
+        }
+        return viewOfSignUpPage(false);
+      },
+    );
+  }
+
+  Widget viewOfSignUpPage(bool isLoading) {
+    return GestureDetector(
+      onTap: () {
+        FocusManager.instance.primaryFocus?.unfocus();
+      },
+      child: Scaffold(
+        body: Container(
+          padding: EdgeInsets.all(10),
+          width: MediaQuery.of(context).size.width,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color.fromRGBO(193, 53, 132, 1),
+                  Color.fromRGBO(131, 58, 180, 1),
+                ]),
+          ),
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Instagram',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 45,
+                            fontFamily: 'Billabong',
+                          ),
+                        ),
+
+                        //#fullname
+                        Container(
+                          margin: EdgeInsets.only(top: 10),
+                          height: 50,
+                          padding: EdgeInsets.only(left: 10, right: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(7),
+                          ),
+                          child: TextField(
+                            controller: fullnameController,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: const InputDecoration(
+                                hintText: "Fullname",
+                                border: InputBorder.none,
+                                hintStyle: TextStyle(
+                                    fontSize: 17, color: Colors.white54)),
+                          ),
+                        ),
+
+                        //#email
+                        Container(
+                          margin: const EdgeInsets.only(top: 10),
+                          height: 50,
+                          padding: const EdgeInsets.only(left: 10, right: 10),
+                          decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(7)),
+                          child: TextField(
+                            controller: emailController,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: const InputDecoration(
+                                hintText: "Email",
+                                border: InputBorder.none,
+                                hintStyle: TextStyle(
+                                    fontSize: 17, color: Colors.white54)),
+                          ),
+                        ),
+
+                        //#password
+                        Container(
+                          margin: const EdgeInsets.only(top: 10),
+                          height: 50,
+                          padding: const EdgeInsets.only(left: 10, right: 10),
+                          decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(7)),
+                          child: TextField(
+                            controller: passwordController,
+                            style: const TextStyle(color: Colors.white),
+                            obscureText: true,
+                            decoration: const InputDecoration(
+                                hintText: "Password",
+                                border: InputBorder.none,
+                                hintStyle: TextStyle(
+                                    fontSize: 17, color: Colors.white54)),
+                          ),
+                        ),
+
+                        //#cpassword
+
+                        Container(
+                          margin: const EdgeInsets.only(top: 10),
+                          height: 50,
+                          padding: const EdgeInsets.only(left: 10, right: 10),
+                          decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(7)),
+                          child: TextField(
+                            controller: cpasswordController,
+                            style: const TextStyle(color: Colors.white),
+                            obscureText: true,
+                            decoration: const InputDecoration(
+                                hintText: "Confirm Password",
+                                border: InputBorder.none,
+                                hintStyle: TextStyle(
+                                    fontSize: 17, color: Colors.white54)),
+                          ),
+                        ),
+
+                        //#signin
+                        GestureDetector(
+                          onTap: () {
+                            _doSignUp();
+                          },
+                          child: Container(
+                              margin: const EdgeInsets.only(top: 10),
+                              height: 50,
+                              padding:
+                                  const EdgeInsets.only(left: 10, right: 10),
+                              decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(7)),
+                              child: const Center(
+                                child: Text(
+                                  "Sign Up",
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 17),
+                                ),
+                              )),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text(
-                        'Instagram',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 45,
-                          fontFamily: 'Billabong',
-                        ),
+                        "Already have an account?",
+                        style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
-
-                      //#fullname
-                      Container(
-                        margin: EdgeInsets.only(top: 10),
-                        height: 50,
-                        padding: EdgeInsets.only(left: 10, right: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(7),
-                        ),
-                        child: TextField(
-                          controller: fullnameController,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: const InputDecoration(
-                              hintText: "Fullname",
-                              border: InputBorder.none,
-                              hintStyle: TextStyle(
-                                  fontSize: 17, color: Colors.white54)),
-                        ),
+                      const SizedBox(
+                        width: 10,
                       ),
-
-                      //#email
-                      Container(
-                        margin: const EdgeInsets.only(top: 10),
-                        height: 50,
-                        padding: const EdgeInsets.only(left: 10, right: 10),
-                        decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(7)),
-                        child: TextField(
-                          controller: emailController,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: const InputDecoration(
-                              hintText: "Email",
-                              border: InputBorder.none,
-                              hintStyle: TextStyle(
-                                  fontSize: 17, color: Colors.white54)),
-                        ),
-                      ),
-
-                      //#password
-                      Container(
-                        margin: const EdgeInsets.only(top: 10),
-                        height: 50,
-                        padding: const EdgeInsets.only(left: 10, right: 10),
-                        decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(7)),
-                        child: TextField(
-                          controller: passwordController,
-                          style: const TextStyle(color: Colors.white),
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                              hintText: "Password",
-                              border: InputBorder.none,
-                              hintStyle: TextStyle(
-                                  fontSize: 17, color: Colors.white54)),
-                        ),
-                      ),
-
-                      //#cpassword
-
-                      Container(
-                        margin: const EdgeInsets.only(top: 10),
-                        height: 50,
-                        padding: const EdgeInsets.only(left: 10, right: 10),
-                        decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(7)),
-                        child: TextField(
-                          controller: cpasswordController,
-                          style: const TextStyle(color: Colors.white),
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                              hintText: "Confirm Password",
-                              border: InputBorder.none,
-                              hintStyle: TextStyle(
-                                  fontSize: 17, color: Colors.white54)),
-                        ),
-                      ),
-
-                      //#signin
                       GestureDetector(
                         onTap: () {
-                          _doSignUp();
+                          signUpBloc.callSignInPage(context);
                         },
-                        child: Container(
-                            margin: const EdgeInsets.only(top: 10),
-                            height: 50,
-                            padding: const EdgeInsets.only(left: 10, right: 10),
-                            decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(7)),
-                            child: const Center(
-                              child: Text(
-                                "Sign Up",
-                                style: TextStyle(
-                                    color: Colors.white, fontSize: 17),
-                              ),
-                            )),
+                        child: const Text(
+                          "Sign In",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ],
                   ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      "Already have an account?",
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        _callSignInPage();
-                      },
-                      child: const Text(
-                        "Sign In",
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(),
-                  )
-                : const SizedBox.shrink(),
-          ],
+                ],
+              ),
+              isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  : const SizedBox.shrink(),
+            ],
+          ),
         ),
       ),
     );

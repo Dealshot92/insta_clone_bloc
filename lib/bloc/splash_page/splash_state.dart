@@ -7,3 +7,14 @@ class SplashInitialState extends SplashState {
   @override
   List<Object?> get props => [];
 }
+
+class SplashLoadingState extends SplashState {
+
+  @override
+  List<Object?> get props => [];
+}
+class SplashLoadedState extends SplashState {
+
+  @override
+  List<Object?> get props => [];
+}

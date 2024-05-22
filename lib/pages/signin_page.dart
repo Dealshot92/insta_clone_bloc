@@ -1,14 +1,13 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:insta_clone_bloc/pages/signup_page.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:insta_clone_bloc/bloc/signin_page/signin_bloc.dart';
+import 'package:insta_clone_bloc/bloc/signin_page/signin_event.dart';
 
-import '../services/auth_service.dart';
-import '../services/prefs_service.dart';
+import '../bloc/signin_page/signin_state.dart';
 import '../services/utils_service.dart';
-import 'home_page.dart';
 
 class SignInPage extends StatefulWidget {
-  static final String id = 'signin_page';
+  static const String id = 'signin_page';
 
   const SignInPage({super.key});
 
@@ -17,174 +16,181 @@ class SignInPage extends StatefulWidget {
 }
 
 class _SignInPageState extends State<SignInPage> {
+  late SignInBloc signInBloc;
+
   var emailController = TextEditingController();
   var passwordController = TextEditingController();
-  var isLoading = false;
 
   _doSignIn() {
     String email = emailController.text.toString().trim();
     String password = passwordController.text.toString().trim();
     if (email.isEmpty || password.isEmpty) return;
 
-    setState(() {
-      isLoading=true;
-    });
-
-    AuthService.signInUser(context, email, password).then((firebaseUser) => {
-      _getFirebaseUser(firebaseUser),
-    });
+    signInBloc
+        .add(SignedInEvent(context: context, email: email, password: password));
   }
 
-  _getFirebaseUser(User? firebaseUser)async{
-    setState(() {
-      isLoading=false;
-    });
-    if(firebaseUser != null){
-      await Prefs.saveUserId(firebaseUser.uid);
-      _callHomePage();
-    }else{
-      Utils.fireToast('Check your email or password');
-    }
-  }
-
-  _callHomePage(){
-    Navigator.pushReplacementNamed(context, HomePage.id);
-  }
-
-  _callSignUpPage() {
-    Navigator.pushReplacementNamed(context, SignUpPage.id);
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    signInBloc = context.read<SignInBloc>();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-          padding: EdgeInsets.all(10),
-          width: MediaQuery.of(context).size.width,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color.fromRGBO(193, 53, 132, 1),
-                  Color.fromRGBO(131, 58, 180, 1),
-                ]),
-          ),
-          child: Stack(
-            children: [
-              Column(
-                children: [
-                  Expanded(
-                    child: Column(
+    return BlocConsumer<SignInBloc, SignInState>(
+      listener: (context, state) {
+        if (state is SignInSuccessState) {
+          signInBloc.callHomePage(context);
+        }
+        if (state is SignInFailureState) {
+          Utils.fireToast(state.errorMessage);
+        }
+      },
+      builder: (context, state) {
+        if (state is SignInLoadingState) {
+          return viewOfSignIn(true);
+        }
+        return viewOfSignIn(false);
+      },
+    );
+  }
+
+  Widget viewOfSignIn(bool isLoading) {
+    return GestureDetector(
+      onTap: () {
+        FocusManager.instance.primaryFocus?.unfocus();
+      },
+      child: Scaffold(
+        body: Container(
+            padding: EdgeInsets.all(10),
+            width: MediaQuery.of(context).size.width,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color.fromRGBO(193, 53, 132, 1),
+                    Color.fromRGBO(131, 58, 180, 1),
+                  ]),
+            ),
+            child: Stack(
+              children: [
+                Column(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'Instagram',
+                            style: TextStyle(
+                              fontSize: 45,
+                              color: Colors.white,
+                              fontFamily: 'Billabong',
+                            ),
+                          ),
+                          //#email
+                          Container(
+                            margin: const EdgeInsets.only(top: 10),
+                            height: 50,
+                            padding: const EdgeInsets.only(left: 10, right: 10),
+                            decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(7)),
+                            child: TextField(
+                              controller: emailController,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: const InputDecoration(
+                                  hintText: "Email",
+                                  border: InputBorder.none,
+                                  hintStyle: TextStyle(
+                                      fontSize: 17, color: Colors.white54)),
+                            ),
+                          ),
+
+                          //#password
+                          Container(
+                            margin: const EdgeInsets.only(top: 10),
+                            height: 50,
+                            padding: const EdgeInsets.only(left: 10, right: 10),
+                            decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(7)),
+                            child: TextField(
+                              controller: passwordController,
+                              style: const TextStyle(color: Colors.white),
+                              obscureText: true,
+                              decoration: const InputDecoration(
+                                  hintText: "Password",
+                                  border: InputBorder.none,
+                                  hintStyle: TextStyle(
+                                      fontSize: 17, color: Colors.white54)),
+                            ),
+                          ),
+                          //#signin
+                          GestureDetector(
+                            onTap: () {
+                              _doSignIn();
+                            },
+                            child: Container(
+                                margin: EdgeInsets.only(top: 10),
+                                height: 50,
+                                padding: EdgeInsets.only(left: 10, right: 10),
+                                decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(7)),
+                                child: const Center(
+                                  child: Text(
+                                    "Sign In",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 17,
+                                    ),
+                                  ),
+                                )),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    //#footer
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
-                          'Instagram',
-                          style: TextStyle(
-                            fontSize: 45,
-                            color: Colors.white,
-                            fontFamily: 'Billabong',
-                          ),
+                          "Don`t have an account?",
+                          style: TextStyle(color: Colors.white, fontSize: 16),
                         ),
-                        //#email
-                        Container(
-                          margin: const EdgeInsets.only(top: 10),
-                          height: 50,
-                          padding: const EdgeInsets.only(left: 10, right: 10),
-                          decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(7)),
-                          child: TextField(
-                            controller: emailController,
-                            style: const TextStyle(color: Colors.white),
-                            decoration: const InputDecoration(
-                                hintText: "Email",
-                                border: InputBorder.none,
-                                hintStyle: TextStyle(
-                                    fontSize: 17, color: Colors.white54)),
-                          ),
+                        const SizedBox(
+                          width: 10,
                         ),
-
-                        //#password
-                        Container(
-                          margin: const EdgeInsets.only(top: 10),
-                          height: 50,
-                          padding: const EdgeInsets.only(left: 10, right: 10),
-                          decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(7)),
-                          child: TextField(
-                            controller: passwordController,
-                            style: const TextStyle(color: Colors.white),
-                            obscureText: true,
-                            decoration: const InputDecoration(
-                                hintText: "Password",
-                                border: InputBorder.none,
-                                hintStyle: TextStyle(
-                                    fontSize: 17, color: Colors.white54)),
-                          ),
-                        ),
-                        //#signin
                         GestureDetector(
                           onTap: () {
-                            _doSignIn();
+                            signInBloc.callSignUpPage(context);
+                            print('pressed');
                           },
-                          child: Container(
-                              margin: EdgeInsets.only(top: 10),
-                              height: 50,
-                              padding: EdgeInsets.only(left: 10, right: 10),
-                              decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(7)),
-                              child: const Center(
-                                child: Text(
-                                  "Sign In",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 17,
-                                  ),
-                                ),
-                              )),
+                          child: const Text(
+                            "Sign Up",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ],
                     ),
-                  ),
-
-                  //#footer
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        "Don`t have an account?",
-                        style: TextStyle(color: Colors.white, fontSize: 16),
-                      ),
-                      const SizedBox(
-                        width: 10,
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          _callSignUpPage();
-                          print('pressed');
-                        },
-                        child: const Text(
-                          "Sign Up",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(),
-                    )
-                  : const SizedBox.shrink(),
-            ],
-          )),
+                  ],
+                ),
+                isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(),
+                      )
+                    : const SizedBox.shrink(),
+              ],
+            )),
+      ),
     );
   }
 }

@@ -1,21 +1,14 @@
-import 'package:equatable/equatable.dart';
 
-abstract class HomeEvent extends Equatable {}
+abstract class HomeEvent {}
 
-class HomePageChangedEvent extends HomeEvent {
-  final int index;
+class BottomNavEvent extends HomeEvent {
+  int currentIndex;
 
-  HomePageChangedEvent(this.index);
-
-  @override
-  List<Object?> get props => [];
+  BottomNavEvent({required this.currentIndex});
 }
 
-class HomeAnimateToPageEvent extends HomeEvent {
-  final int index;
+class PageViewEvent extends HomeEvent {
+  int currentIndex;
 
-  HomeAnimateToPageEvent(this.index);
-
-  @override
-  List<Object?> get props => [index];
+  PageViewEvent({required this.currentIndex});
 }

@@ -12,6 +12,7 @@ import '../../services/log_service.dart';
 import '../../services/notif_service.dart';
 import '../../services/prefs_service.dart';
 import '../home_page/home_bloc.dart';
+import '../signin_page/signin_bloc.dart';
 import 'splash_event.dart';
 import 'splash_state.dart';
 
@@ -33,7 +34,16 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
         ),
       );
     } else {
-      Navigator.pushReplacementNamed(context, SignInPage.id);
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (BuildContext context) {
+            return BlocProvider(
+              create: (context) => SignInBloc(),
+              child: const SignInPage(),
+            );
+          },
+        ),
+      );
     }
   }
 
