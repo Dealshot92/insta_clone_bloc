@@ -33,7 +33,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
   late MyProfileBloc profileBloc;
   late MyPostsBloc postsBloc;
   late MyPhotoBloc photoBloc;
-
+  final _gridViewKey = GlobalKey();
   final ImagePicker _picker = ImagePicker();
 
   _imgFromGallery() async {
@@ -393,6 +393,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
       builder: (context, state){
         return Expanded(
           child: GridView.builder(
+            key: _gridViewKey,
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: state),
             itemCount: items.length,
             itemBuilder: (ctx, index) {

@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:insta_clone_bloc/mysearch/follow_member_bloc.dart';
+import 'package:insta_clone_bloc/mysearch/follow_member_event.dart';
+import 'package:insta_clone_bloc/mysearch/my_search_bloc.dart';
 
 import '../model/member_model.dart';
+import '../mysearch/follow_member_state.dart';
+import '../mysearch/my_search_event.dart';
+import '../mysearch/my_search_state.dart';
 import '../services/db_service.dart';
 import '../services/http_service.dart';
 
@@ -12,121 +19,88 @@ class MySearchPage extends StatefulWidget {
 }
 
 class _MySearchPageState extends State<MySearchPage> {
-  bool isLoading = false;
+  late MySearchBloc searchBloc;
   var searchController = TextEditingController();
-  List<Member> items = [];
 
-  void _apiSearchMembers(String keyword) {
-    setState(() {
-      isLoading = true;
-    });
-    DBService.searchMembers(keyword).then((users) => {
-      _resSearchMembers(users),
-    });
-  }
 
-  void _resSearchMembers(List<Member> members) {
-    setState(() {
-      items = members;
-      isLoading = false;
-    });
-  }
-
-  void _apiFollowMember(Member someone) async {
-    setState(() {
-      isLoading = true;
-    });
-    await DBService.followMember(someone);
-    setState(() {
-      someone.followed = true;
-      isLoading = false;
-    });
-    DBService.storePostsToMyFeed(someone);
-    sendNotificationToFollowedMember(someone);
-  }
-
-  void sendNotificationToFollowedMember(Member someone) async{
-    Member me=await DBService.loadMember();
-    await Network.POST(Network.API_SEND_NOTIF, Network.paramsNotify(me, someone));
-  }
-
-  void _apiUnFollowMember(Member someone) async {
-    setState(() {
-      isLoading = true;
-    });
-    await DBService.unfollowMember(someone);
-    setState(() {
-      someone.followed = false;
-      isLoading = false;
-    });
-    DBService.removePostsFromMyFeed(someone);
-  }
 
   @override
   void initState() {
     super.initState();
-    _apiSearchMembers('');
+    searchBloc = context.read<MySearchBloc>();
+    searchBloc.add(LoadSearchMembersEvent(keyword: ""));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          'Search',
-          style: TextStyle(
-              color: Colors.black, fontFamily: "Billabong", fontSize: 25),
-        ),
-      ),
-      body: Stack(
-        children: [
-          Container(
-            padding: EdgeInsets.only(left: 20, right: 20),
-            child: Column(
-              children: [
-                //#search member
-                Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.only(left: 10, right: 10),
-                  height: 45,
-                  decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(7)),
-                  child: TextField(
-                    style: const TextStyle(
-                      color: Colors.black87,
-                    ),
-                    controller: searchController,
-                    decoration: const InputDecoration(
-                      hintText: 'Search',
-                      border: InputBorder.none,
-                      hintStyle: TextStyle(fontSize: 15, color: Colors.grey),
-                      icon: Icon(
-                        Icons.search,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
-                ),
-
-                //#member list
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: items.length,
-                    itemBuilder: (ctx, index){
-                      return _itemOfMember(items[index]);
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return BlocConsumer<MySearchBloc, MySearchState>(
+      listener: (context, state){},
+      builder: (context, state){
+        if(state is MySearchLoadingState){
+          return viewOfMySearchPage(true, []);
+        }
+        if(state is MySearchSuccessState){
+          return viewOfMySearchPage(false, state.items);
+        }
+        return viewOfMySearchPage(false, []);
+      },
     );
+  }
+  Widget viewOfMySearchPage(bool isLoading, List<Member> items){
+    return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          title: const Text(
+            "Search",
+            style: TextStyle(
+                color: Colors.black, fontFamily: "Billabong", fontSize: 25),
+          ),
+        ),
+        body: Stack(
+          children: [
+            Container(
+              padding: const EdgeInsets.only(left: 20, right: 20),
+              child: Column(
+                children: [
+                  //#search member
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.only(left: 10, right: 10),
+                    height: 45,
+                    decoration: BoxDecoration(
+                        color: Colors.grey.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(7)),
+                    child: TextField(
+                      style: const TextStyle(color: Colors.black87),
+                      controller: searchController,
+                      decoration: const InputDecoration(
+                          hintText: "Search",
+                          border: InputBorder.none,
+                          hintStyle:
+                          TextStyle(fontSize: 15, color: Colors.grey),
+                          icon: Icon(
+                            Icons.search,
+                            color: Colors.grey,
+                          )),
+                    ),
+                  ),
+
+                  //#member list
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: items.length,
+                      itemBuilder: (ctx, index) {
+                        return _itemOfMember(items[index]);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ));
   }
 
   Widget _itemOfMember(Member member) {
@@ -187,21 +161,33 @@ class _MySearchPageState extends State<MySearchPage> {
                 GestureDetector(
                   onTap: () {
                     if (member.followed) {
-                      _apiUnFollowMember(member);
+                      context.read<FollowMemberBloc>().add(FollowMemberEvent(someone: member));
                     } else {
-                      _apiFollowMember(member);
+                      context.read<FollowMemberBloc>().add(UnFollowMemberEvent(someone: member));
                     }
                   },
-                  child: Container(
-                    width: 100,
-                    height: 30,
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(3),
-                        border: Border.all(width: 1, color: Colors.grey)),
-                    child: Center(
-                      child:
-                      member.followed ? Text("Following") : Text("Follow"),
-                    ),
+                  child: BlocBuilder<FollowMemberBloc, FollowState>(
+                    builder: (context, state){
+                      return member.followed ? Container(
+                        width: 100,
+                        height: 30,
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(3),
+                            border: Border.all(width: 1, color: Colors.grey)),
+                        child: const Center(
+                            child: Text("Following")
+                        ),
+                      ):Container(
+                        width: 100,
+                        height: 30,
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(3),
+                            border: Border.all(width: 1, color: Colors.grey)),
+                        child: const Center(
+                            child: Text("Follow")
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],

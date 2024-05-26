@@ -1,16 +1,7 @@
-import 'dart:async';
 
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:insta_clone_bloc/bloc/splash_page/splash_bloc.dart';
-import 'package:insta_clone_bloc/pages/signin_page.dart';
-
-import '../services/auth_service.dart';
-import '../services/log_service.dart';
-import '../services/notif_service.dart';
-import '../services/prefs_service.dart';
-import 'home_page.dart';
 
 class SplashPage extends StatefulWidget {
   static const String id = 'splash_page';

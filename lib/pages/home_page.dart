@@ -1,11 +1,19 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:insta_clone_bloc/bloc/home_page/home_bloc.dart';
-import 'package:insta_clone_bloc/bloc/home_page/home_event.dart';
-import 'package:insta_clone_bloc/bloc/home_page/home_state.dart';
-import 'package:insta_clone_bloc/bloc/myfeed/like_post_bloc.dart';
+import '../bloc/home_page/home_bloc.dart';
+import '../bloc/home_page/home_event.dart';
+import '../bloc/home_page/home_state.dart';
+import '../bloc/myfeed/like_post_bloc.dart';
 import '../bloc/myfeed/my_feed_bloc.dart';
+import '../bloc/myprofile/axis_count_bloc.dart';
+import '../bloc/myprofile/my_photo_bloc.dart';
+import '../bloc/myprofile/my_posts_bloc.dart';
+import '../bloc/myprofile/my_profile_bloc.dart';
+import '../bloc/myupload/image_picker_bloc.dart';
+import '../bloc/myupload/my_upload_bloc.dart';
+import '../mysearch/follow_member_bloc.dart';
+import '../mysearch/my_search_bloc.dart';
 import '../services/log_service.dart';
 import 'my_feed_page.dart';
 import 'my_likes_page.dart';
@@ -14,24 +22,22 @@ import 'my_search_page.dart';
 import 'my_upload_page.dart';
 
 class HomePage extends StatefulWidget {
-  static final String id = 'home_page';
+  static const String id = "home_page";
 
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
   late HomeBloc homeBloc;
-
   PageController? _pageController = PageController();
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-
     homeBloc = context.read<HomeBloc>();
   }
 
@@ -59,12 +65,53 @@ class _HomePageState extends State<HomePage> {
                   pageController: _pageController,
                 ),
               ),
-              const MySearchPage(),
-              MyUploadPage(
-                pageController: _pageController,
+
+              MultiBlocProvider(
+                providers: [
+                  BlocProvider(
+                    create: (context) => MySearchBloc(),
+                  ),
+                  BlocProvider(
+                    create: (context) => FollowMemberBloc(),
+                  ),
+                ],
+                child: const MySearchPage(),
               ),
+
+              MultiBlocProvider(
+                providers: [
+                  BlocProvider(
+                    create: (context) => MyUploadBloc(),
+                  ),
+                  BlocProvider(
+                    create: (context) => ImagePickerBloc(),
+                  ),
+                ],
+                child: MyUploadPage(
+                  pageController: _pageController,
+                ),
+              ),
+
               const MyLikesPage(),
-              const MyProfilePage(),
+
+              MultiBlocProvider(
+                providers: [
+                  BlocProvider(
+                    create: (context) => MyProfileBloc(),
+                  ),
+                  BlocProvider(
+                    create: (context) => MyPostsBloc(),
+                  ),
+                  BlocProvider(
+                    create: (context) => AxisCountBloc(),
+                  ),
+                  BlocProvider(
+                    create: (context) => MyPhotoBloc(),
+                  ),
+                ],
+                child: const MyProfilePage(),
+              ),
+
             ],
             onPageChanged: (int index) {
               homeBloc.add(PageViewEvent(currentIndex: index));
@@ -77,7 +124,7 @@ class _HomePageState extends State<HomePage> {
                   duration: Duration(milliseconds: 200), curve: Curves.easeIn);
             },
             currentIndex: state.currentIndex,
-            activeColor: const Color.fromRGBO(193, 53, 132, 1),
+            activeColor: Color.fromRGBO(193, 53, 132, 1),
             items: const [
               BottomNavigationBarItem(
                 icon: Icon(
